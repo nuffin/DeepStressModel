@@ -1,6 +1,7 @@
 """
 数据库管理器模块，负责所有数据库操作
 """
+
 import os
 import sqlite3
 import logging
@@ -13,10 +14,11 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
 class DatabaseManager:
     def __init__(self, db_path: str = "data/deepstress.db"):
         """初始化数据库管理器
-        
+
         Args:
             db_path: 数据库文件路径
         """
@@ -29,11 +31,11 @@ class DatabaseManager:
         self._check_and_migrate()
         self._init_tables()
         self._init_default_data()
-        
+
     def _ensure_db_directory(self):
         """确保数据库目录存在"""
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
-        
+
     def _connect(self):
         """连接到数据库"""
         try:
@@ -44,19 +46,23 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"连接数据库失败: {str(e)}")
             raise
-            
+
     def _init_version_table(self):
         """初始化版本表"""
         try:
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS db_version (
                     version INTEGER PRIMARY KEY,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
-            
+            """
+            )
+
             # 检查是否已有版本记录
-            self.cursor.execute("SELECT version FROM db_version ORDER BY version DESC LIMIT 1")
+            self.cursor.execute(
+                "SELECT version FROM db_version ORDER BY version DESC LIMIT 1"
+            )
             row = self.cursor.fetchone()
             if not row:
                 # 插入初始版本
@@ -66,26 +72,29 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"初始化版本表失败: {e}", exc_info=True)
             raise
-    
+
     def _check_and_migrate(self):
         """检查并执行数据库迁移"""
         try:
-            self.cursor.execute("SELECT version FROM db_version ORDER BY version DESC LIMIT 1")
+            self.cursor.execute(
+                "SELECT version FROM db_version ORDER BY version DESC LIMIT 1"
+            )
             row = self.cursor.fetchone()
             current_version = row[0] if row else 0
-            
+
             if current_version < 1:
                 logger.info("执行数据库迁移: 版本 0 -> 1")
                 # 删除旧的测试记录表
                 self.cursor.execute("DROP TABLE IF EXISTS test_records")
                 self.conn.commit()
                 logger.info("已删除旧的测试记录表")
-            
+
             if current_version < 2:
                 logger.info("执行数据库迁移: 版本 1 -> 2")
                 # 删除旧的测试记录表并创建新表
                 self.cursor.execute("DROP TABLE IF EXISTS test_records")
-                self.cursor.execute('''
+                self.cursor.execute(
+                    """
                     CREATE TABLE test_records (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         session_name TEXT NOT NULL,
@@ -106,16 +115,17 @@ class DatabaseManager:
                         log_file TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
-                ''')
+                """
+                )
                 self.conn.commit()
                 logger.info("已更新测试记录表结构")
-            
+
             # 更新数据库版本到 2
             if current_version != 2:
                 self.cursor.execute("INSERT INTO db_version (version) VALUES (2)")
                 self.conn.commit()
                 logger.info("数据库版本已更新到 2")
-                
+
         except Exception as e:
             logger.error(f"数据库迁移失败: {e}", exc_info=True)
             raise
@@ -125,7 +135,8 @@ class DatabaseManager:
         try:
             logger.info("开始初始化数据库表")
             # 创建模型配置表
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS model_configs (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT UNIQUE NOT NULL,
@@ -137,19 +148,23 @@ class DatabaseManager:
                     top_p REAL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
-            
+            """
+            )
+
             # 创建通用配置表
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS configs (
                     key TEXT PRIMARY KEY,
                     value TEXT NOT NULL,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
-            
+            """
+            )
+
             # 创建跑分设置表
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS benchmark_settings (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     device_id TEXT UNIQUE NOT NULL,
@@ -160,10 +175,12 @@ class DatabaseManager:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
-            
+            """
+            )
+
             # 创建数据集表
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS datasets (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT UNIQUE NOT NULL,
@@ -171,10 +188,12 @@ class DatabaseManager:
                     is_builtin BOOLEAN DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
-            
+            """
+            )
+
             # 创建GPU服务器表
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS gpu_servers (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT UNIQUE NOT NULL,
@@ -185,10 +204,12 @@ class DatabaseManager:
                     is_active BOOLEAN DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
-            
+            """
+            )
+
             # 创建测试记录表
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS test_records (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     session_name TEXT NOT NULL,
@@ -209,8 +230,9 @@ class DatabaseManager:
                     log_file TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
-            
+            """
+            )
+
             self.conn.commit()
             logger.info("数据库表初始化完成")
         except Exception as e:
@@ -228,13 +250,17 @@ class DatabaseManager:
                     dataset_data = {
                         "name": name,
                         "prompts": json.dumps(prompts, ensure_ascii=False),
-                        "is_builtin": True
+                        "is_builtin": True,
                     }
                     self.cursor.execute(
                         "INSERT INTO datasets (name, prompts, is_builtin) VALUES (?, ?, ?)",
-                        (dataset_data["name"], dataset_data["prompts"], dataset_data["is_builtin"])
+                        (
+                            dataset_data["name"],
+                            dataset_data["prompts"],
+                            dataset_data["is_builtin"],
+                        ),
                     )
-            
+
             self.conn.commit()
             logger.info("默认数据初始化完成")
         except Exception as e:
@@ -253,24 +279,29 @@ class DatabaseManager:
         """添加模型配置"""
         try:
             # 检查是否已存在同名配置
-            self.cursor.execute("SELECT name FROM model_configs WHERE name = ?", (config_data["name"],))
+            self.cursor.execute(
+                "SELECT name FROM model_configs WHERE name = ?", (config_data["name"],)
+            )
             if self.cursor.fetchone():
                 logger.error(f"模型配置已存在: {config_data['name']}")
                 return False
-                
-            self.cursor.execute('''
+
+            self.cursor.execute(
+                """
                 INSERT INTO model_configs 
                 (name, api_url, api_key, model, max_tokens, temperature, top_p)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                config_data["name"],
-                config_data["api_url"],
-                config_data.get("api_key"),
-                config_data["model"],
-                config_data.get("max_tokens", 2000),
-                config_data.get("temperature", 0.7),
-                config_data.get("top_p", 0.9)
-            ))
+            """,
+                (
+                    config_data["name"],
+                    config_data["api_url"],
+                    config_data.get("api_key"),
+                    config_data["model"],
+                    config_data.get("max_tokens", 2000),
+                    config_data.get("temperature", 0.7),
+                    config_data.get("top_p", 0.9),
+                ),
+            )
             self.conn.commit()
             return True
         except Exception as e:
@@ -280,19 +311,22 @@ class DatabaseManager:
     def update_model_config(self, config_data: Dict) -> bool:
         """更新模型配置"""
         try:
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 UPDATE model_configs 
                 SET api_url = ?, api_key = ?, model = ?, max_tokens = ?, temperature = ?, top_p = ?
                 WHERE name = ?
-            ''', (
-                config_data["api_url"],
-                config_data.get("api_key"),
-                config_data["model"],
-                config_data.get("max_tokens", 2000),
-                config_data.get("temperature", 0.7),
-                config_data.get("top_p", 0.9),
-                config_data["name"]
-            ))
+            """,
+                (
+                    config_data["api_url"],
+                    config_data.get("api_key"),
+                    config_data["model"],
+                    config_data.get("max_tokens", 2000),
+                    config_data.get("temperature", 0.7),
+                    config_data.get("top_p", 0.9),
+                    config_data["name"],
+                ),
+            )
             self.conn.commit()
             return True
         except Exception as e:
@@ -345,19 +379,22 @@ class DatabaseManager:
                         prompts = prompts.split("\n")
                 else:
                     prompts = []
-            
+
             # 转换为JSON字符串
             prompts_json = json.dumps(prompts, ensure_ascii=False)
-            
-            self.cursor.execute('''
+
+            self.cursor.execute(
+                """
                 INSERT OR REPLACE INTO datasets 
                 (name, prompts, is_builtin)
                 VALUES (?, ?, ?)
-            ''', (
-                dataset_data["name"],
-                prompts_json,
-                dataset_data.get("is_builtin", False)
-            ))
+            """,
+                (
+                    dataset_data["name"],
+                    prompts_json,
+                    dataset_data.get("is_builtin", False),
+                ),
+            )
             self.conn.commit()
             logger.info(f"成功添加数据集: {dataset_data['name']}")
             return True
@@ -368,7 +405,9 @@ class DatabaseManager:
     def delete_dataset(self, name: str) -> bool:
         """删除数据集"""
         try:
-            self.cursor.execute("DELETE FROM datasets WHERE name = ? AND NOT is_builtin", (name,))
+            self.cursor.execute(
+                "DELETE FROM datasets WHERE name = ? AND NOT is_builtin", (name,)
+            )
             self.conn.commit()
             return True
         except Exception as e:
@@ -387,18 +426,21 @@ class DatabaseManager:
     def add_gpu_server(self, server_data: Dict) -> bool:
         """添加GPU服务器配置"""
         try:
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 INSERT OR REPLACE INTO gpu_servers 
                 (name, host, username, password, port, is_active)
                 VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                server_data["name"],
-                server_data["host"],
-                server_data["username"],
-                server_data.get("password"),
-                server_data.get("port", 22),  # 默认端口为22
-                server_data.get("is_active", False)
-            ))
+            """,
+                (
+                    server_data["name"],
+                    server_data["host"],
+                    server_data["username"],
+                    server_data.get("password"),
+                    server_data.get("port", 22),  # 默认端口为22
+                    server_data.get("is_active", False),
+                ),
+            )
             self.conn.commit()
             return True
         except Exception as e:
@@ -428,33 +470,38 @@ class DatabaseManager:
     def set_gpu_server_active(self, name: str) -> bool:
         """设置GPU服务器为激活状态"""
         try:
-            self.cursor.execute("UPDATE gpu_servers SET is_active = 0")  # 先取消所有服务器的激活状态
-            self.cursor.execute("UPDATE gpu_servers SET is_active = 1 WHERE name = ?", (name,))
+            self.cursor.execute(
+                "UPDATE gpu_servers SET is_active = 0"
+            )  # 先取消所有服务器的激活状态
+            self.cursor.execute(
+                "UPDATE gpu_servers SET is_active = 1 WHERE name = ?", (name,)
+            )
             self.conn.commit()
             return True
         except Exception as e:
             logger.error(f"设置GPU服务器激活状态失败: {e}")
             return False
-            
+
     def close(self):
         """关闭数据库连接"""
         if self.conn:
             self.conn.close()
             logger.info("数据库连接已关闭")
-            
+
     def __del__(self):
         """析构函数，确保关闭数据库连接"""
         self.close()
 
     def get_test_records(self) -> List[Dict]:
         """获取所有测试记录
-        
+
         Returns:
             List[Dict]: 测试记录列表
         """
         try:
             logger.info("开始获取测试记录")
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 SELECT 
                     test_task_id, session_name, model_name, concurrency,
                     total_tasks, successful_tasks, failed_tasks,
@@ -463,8 +510,9 @@ class DatabaseManager:
                     test_time, log_file, created_at
                 FROM test_records 
                 ORDER BY created_at DESC
-            ''')
-            
+            """
+            )
+
             records = []
             for row in self.cursor.fetchall():
                 record = dict(row)
@@ -481,10 +529,10 @@ class DatabaseManager:
                 record["avg_tps"] = float(record["avg_tps"])
                 record["total_time"] = float(record["total_time"])
                 records.append(record)
-            
+
             logger.info(f"成功获取 {len(records)} 条测试记录")
             return records
-            
+
         except Exception as e:
             logger.error(f"获取测试记录失败: {e}", exc_info=True)
             return []
@@ -503,30 +551,40 @@ class DatabaseManager:
 
     def save_test_record(self, record: Dict) -> bool:
         """保存测试记录
-        
+
         Args:
             record: 测试记录数据
-            
+
         Returns:
             bool: 是否保存成功
         """
         try:
             logger.info(f"开始保存测试记录: {record.get('test_task_id', 'unknown')}")
             logger.debug(f"原始记录数据: {record}")
-            
+
             # 验证必要字段
             required_fields = [
-                "test_task_id", "session_name", "model_name", "concurrency",
-                "total_tasks", "successful_tasks", "failed_tasks",
-                "avg_response_time", "avg_generation_speed", "total_chars",
-                "total_tokens", "avg_tps", "total_time", "current_speed"
+                "test_task_id",
+                "session_name",
+                "model_name",
+                "concurrency",
+                "total_tasks",
+                "successful_tasks",
+                "failed_tasks",
+                "avg_response_time",
+                "avg_generation_speed",
+                "total_chars",
+                "total_tokens",
+                "avg_tps",
+                "total_time",
+                "current_speed",
             ]
-            
+
             for field in required_fields:
                 if field not in record or record[field] is None:
                     logger.error(f"缺少必要字段: {field}")
                     return False
-            
+
             # 数据类型转换和验证
             try:
                 record["concurrency"] = int(record["concurrency"])
@@ -543,22 +601,26 @@ class DatabaseManager:
             except (ValueError, TypeError) as e:
                 logger.error(f"数据类型转换失败: {e}")
                 return False
-            
+
             # 数据有效性验证
             if record["concurrency"] <= 0:
                 logger.error("并发数必须大于0")
                 return False
-            
+
             if record["total_tasks"] <= 0:
                 logger.error("总任务数必须大于0")
                 return False
-            
-            if record["successful_tasks"] + record["failed_tasks"] != record["total_tasks"]:
+
+            if (
+                record["successful_tasks"] + record["failed_tasks"]
+                != record["total_tasks"]
+            ):
                 logger.error("成功任务数和失败任务数之和必须等于总任务数")
                 return False
-            
+
             # 使用REPLACE INTO替代INSERT INTO
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 REPLACE INTO test_records (
                     test_task_id, session_name, model_name, concurrency,
                     total_tasks, successful_tasks, failed_tasks,
@@ -566,63 +628,65 @@ class DatabaseManager:
                     total_tokens, avg_tps, total_time, current_speed,
                     test_time, log_file
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                record["test_task_id"],
-                record["session_name"],
-                record["model_name"],
-                record["concurrency"],
-                record["total_tasks"],
-                record["successful_tasks"],
-                record["failed_tasks"],
-                record["avg_response_time"],
-                record["avg_generation_speed"],
-                record["total_chars"],
-                record["total_tokens"],
-                record["avg_tps"],
-                record["total_time"],
-                record["current_speed"],
-                record.get("test_time", time.strftime('%Y-%m-%d %H:%M:%S')),
-                record.get("log_file")
-            ))
-            
+            """,
+                (
+                    record["test_task_id"],
+                    record["session_name"],
+                    record["model_name"],
+                    record["concurrency"],
+                    record["total_tasks"],
+                    record["successful_tasks"],
+                    record["failed_tasks"],
+                    record["avg_response_time"],
+                    record["avg_generation_speed"],
+                    record["total_chars"],
+                    record["total_tokens"],
+                    record["avg_tps"],
+                    record["total_time"],
+                    record["current_speed"],
+                    record.get("test_time", time.strftime("%Y-%m-%d %H:%M:%S")),
+                    record.get("log_file"),
+                ),
+            )
+
             self.conn.commit()
             logger.info(f"测试记录保存成功: {record['test_task_id']}")
             return True
-            
+
         except Exception as e:
             logger.error(f"保存测试记录失败: {e}", exc_info=True)
             return False
 
     def delete_test_record(self, session_name: str) -> bool:
         """删除测试记录
-        
+
         Args:
             session_name: 会话名称
-            
+
         Returns:
             bool: 是否删除成功
         """
         try:
             logger.debug(f"开始删除测试记录，会话名称: {session_name}")
-            
+
             # 获取日志文件路径
             self.cursor.execute(
                 "SELECT log_file FROM test_records WHERE session_name = ?",
-                (session_name,)  # 只根据会话名称匹配
+                (session_name,),  # 只根据会话名称匹配
             )
             result = self.cursor.fetchone()
-            
+
             if result is None:
                 logger.warning(f"未找到会话记录: {session_name}")
                 return False
-                
+
             logger.debug(f"查询到的记录: {dict(result) if result else None}")
-            
+
             if result and result["log_file"]:
                 # 删除日志文件
                 log_file = result["log_file"]
                 logger.debug(f"尝试删除日志文件: {log_file}")
-                
+
                 if os.path.exists(log_file):
                     try:
                         os.remove(log_file)
@@ -631,33 +695,33 @@ class DatabaseManager:
                         logger.warning(f"删除日志文件失败: {e}", exc_info=True)
                 else:
                     logger.warning(f"日志文件不存在: {log_file}")
-            
+
             # 删除数据库记录
             logger.debug(f"开始删除数据库记录: {session_name}")
             self.cursor.execute(
                 "DELETE FROM test_records WHERE session_name = ?",
-                (session_name,)  # 只根据会话名称匹配
+                (session_name,),  # 只根据会话名称匹配
             )
-            
+
             if self.cursor.rowcount == 0:
                 logger.warning(f"没有记录被删除，会话名称: {session_name}")
                 return False
-                
+
             self.conn.commit()
             logger.info(f"成功删除测试记录，会话名称: {session_name}")
             return True
-            
+
         except Exception as e:
             logger.error(f"删除测试记录失败: {e}", exc_info=True)
             return False
 
     def get_config(self, key: str, default: Any = None) -> Any:
         """获取配置值
-        
+
         Args:
             key: 配置键
             default: 默认值
-            
+
         Returns:
             配置值
         """
@@ -676,11 +740,11 @@ class DatabaseManager:
 
     def set_config(self, key: str, value: Any) -> bool:
         """设置配置值
-        
+
         Args:
             key: 配置键
             value: 配置值
-            
+
         Returns:
             是否成功
         """
@@ -688,11 +752,14 @@ class DatabaseManager:
             # 将值转换为JSON字符串
             if not isinstance(value, str):
                 value = json.dumps(value)
-            
-            self.cursor.execute('''
+
+            self.cursor.execute(
+                """
                 INSERT OR REPLACE INTO configs (key, value, updated_at)
                 VALUES (?, ?, CURRENT_TIMESTAMP)
-            ''', (key, value))
+            """,
+                (key, value),
+            )
             self.conn.commit()
             logger.info(f"保存配置成功: {key}={value}")
             return True
@@ -700,11 +767,23 @@ class DatabaseManager:
             logger.error(f"保存配置失败: {e}")
             return False
 
-    def add_gpu_stats(self, host, gpu_util, gpu_memory_util, temperature, power_usage, 
-                     cpu_util=0, memory_util=0, disk_util=0, disk_io_latency=0,
-                     network_recv=0, network_send=0, timestamp=None):
+    def add_gpu_stats(
+        self,
+        host,
+        gpu_util,
+        gpu_memory_util,
+        temperature,
+        power_usage,
+        cpu_util=0,
+        memory_util=0,
+        disk_util=0,
+        disk_io_latency=0,
+        network_recv=0,
+        network_send=0,
+        timestamp=None,
+    ):
         """添加GPU监控数据到数据库
-        
+
         Args:
             host: 服务器主机名
             gpu_util: GPU利用率
@@ -718,16 +797,17 @@ class DatabaseManager:
             network_recv: 网络接收速度
             network_send: 网络发送速度
             timestamp: 时间戳
-            
+
         Returns:
             是否成功
         """
         try:
             if timestamp is None:
                 timestamp = time.time()
-                
+
             # 检查gpu_stats表是否存在，如果不存在则创建
-            self.cursor.execute('''
+            self.cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS gpu_stats (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     host TEXT NOT NULL,
@@ -744,20 +824,33 @@ class DatabaseManager:
                     timestamp REAL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            ''')
-            
-            self.cursor.execute('''
+            """
+            )
+
+            self.cursor.execute(
+                """
                 INSERT INTO gpu_stats (
                     host, gpu_util, gpu_memory_util, temperature, power_usage,
                     cpu_util, memory_util, disk_util, disk_io_latency,
                     network_recv, network_send, timestamp
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                host, gpu_util, gpu_memory_util, temperature, power_usage,
-                cpu_util, memory_util, disk_util, disk_io_latency,
-                network_recv, network_send, timestamp
-            ))
-            
+            """,
+                (
+                    host,
+                    gpu_util,
+                    gpu_memory_util,
+                    temperature,
+                    power_usage,
+                    cpu_util,
+                    memory_util,
+                    disk_util,
+                    disk_io_latency,
+                    network_recv,
+                    network_send,
+                    timestamp,
+                ),
+            )
+
             self.conn.commit()
             return True
         except Exception as e:
@@ -767,7 +860,9 @@ class DatabaseManager:
     def get_benchmark_settings(self) -> Dict:
         """获取跑分设置"""
         try:
-            self.cursor.execute("SELECT * FROM benchmark_settings ORDER BY updated_at DESC LIMIT 1")
+            self.cursor.execute(
+                "SELECT * FROM benchmark_settings ORDER BY updated_at DESC LIMIT 1"
+            )
             row = self.cursor.fetchone()
             if row:
                 return dict(row)
@@ -778,42 +873,51 @@ class DatabaseManager:
 
     def save_benchmark_settings(self, settings: Dict) -> bool:
         """保存跑分设置
-        
+
         Args:
             settings: 包含device_id, api_key, device_name, is_enabled, mode的字典
         """
         try:
             # 检查是否已存在设置
-            self.cursor.execute("SELECT id FROM benchmark_settings WHERE device_id = ?", (settings["device_id"],))
+            self.cursor.execute(
+                "SELECT id FROM benchmark_settings WHERE device_id = ?",
+                (settings["device_id"],),
+            )
             row = self.cursor.fetchone()
-            
+
             if row:
                 # 更新现有设置
-                self.cursor.execute('''
+                self.cursor.execute(
+                    """
                     UPDATE benchmark_settings 
                     SET api_key = ?, device_name = ?, is_enabled = ?, mode = ?, updated_at = CURRENT_TIMESTAMP
                     WHERE device_id = ?
-                ''', (
-                    settings.get("api_key", ""),
-                    settings.get("device_name", "未命名设备"),
-                    settings.get("is_enabled", True),
-                    settings.get("mode", 0),
-                    settings["device_id"]
-                ))
+                """,
+                    (
+                        settings.get("api_key", ""),
+                        settings.get("device_name", "未命名设备"),
+                        settings.get("is_enabled", True),
+                        settings.get("mode", 0),
+                        settings["device_id"],
+                    ),
+                )
             else:
                 # 插入新设置
-                self.cursor.execute('''
+                self.cursor.execute(
+                    """
                     INSERT INTO benchmark_settings 
                     (device_id, api_key, device_name, is_enabled, mode)
                     VALUES (?, ?, ?, ?, ?)
-                ''', (
-                    settings["device_id"],
-                    settings.get("api_key", ""),
-                    settings.get("device_name", "未命名设备"),
-                    settings.get("is_enabled", True),
-                    settings.get("mode", 0)
-                ))
-            
+                """,
+                    (
+                        settings["device_id"],
+                        settings.get("api_key", ""),
+                        settings.get("device_name", "未命名设备"),
+                        settings.get("is_enabled", True),
+                        settings.get("mode", 0),
+                    ),
+                )
+
             self.conn.commit()
             logger.info("跑分设置已保存")
             return True
@@ -821,6 +925,7 @@ class DatabaseManager:
             logger.error(f"保存跑分设置失败: {e}")
             self.conn.rollback()
             return False
+
 
 # 创建全局数据库管理器实例
 db_manager = DatabaseManager()

@@ -1,6 +1,7 @@
 """
 配置管理模块，负责加载和管理应用程序配置
 """
+
 import os
 from pathlib import Path
 from typing import Dict, Any
@@ -30,7 +31,7 @@ DEFAULT_CONFIG = {
         "title": "DeepStressModel",
         "width": 1200,
         "height": 800,
-        "language": "zh_CN"
+        "language": "zh_CN",
     },
     "openai_api": {
         "stream_mode": True,  # 默认启用流式输出
@@ -40,39 +41,38 @@ DEFAULT_CONFIG = {
     },
     "gpu_monitor": {
         "update_interval": 2.0,  # GPU监控更新间隔（秒）
-        "history_size": 60,      # 保存历史数据点数量
-        "remote": {
-            "enabled": False     # 默认使用本地监控
-        }
+        "history_size": 60,  # 保存历史数据点数量
+        "remote": {"enabled": False},  # 默认使用本地监控
     },
     "benchmark": {
         "server_url": "https://tops.ginease.cn:4433",  # 跑分服务器地址
-        "connect_timeout": 10,                                  # 连接超时时间（秒）
-        "max_retries": 3,                                       # 最大重试次数
-        "enabled": True,                                        # 是否启用跑分功能
+        "connect_timeout": 10,  # 连接超时时间（秒）
+        "max_retries": 3,  # 最大重试次数
+        "enabled": True,  # 是否启用跑分功能
         "result_exporter": {
-            "auto_export": False,                               # 是否自动导出结果
-            "default_format": "json"                            # 默认导出格式
-        }
+            "auto_export": False,  # 是否自动导出结果
+            "default_format": "json",  # 默认导出格式
+        },
     },
     "test": {
         "default_concurrency": 1,
         "max_concurrency": 9999,
-        "timeout": 60,           # API请求超时时间（秒）
-        "retry_count": 1,        # 失败重试次数
+        "timeout": 60,  # API请求超时时间（秒）
+        "retry_count": 1,  # 失败重试次数
     },
-    "models": {}  # 移除默认模型配置
+    "models": {},  # 移除默认模型配置
 }
+
 
 class Config:
     """配置管理类"""
-    
+
     def __init__(self):
         self._config = DEFAULT_CONFIG.copy()
         self._config_file = DATA_DIR / "config.json"
         self._load_config()
         self.save_config()  # 确保配置文件存在
-    
+
     def _load_config(self):
         """从文件加载配置"""
         try:
@@ -86,7 +86,7 @@ class Config:
                 print("配置文件不存在，将使用默认配置")
         except Exception as e:
             print(f"加载配置文件失败: {e}")
-    
+
     def _update_dict(self, d: dict, u: dict) -> dict:
         """递归更新字典"""
         for k, v in u.items():
@@ -95,7 +95,7 @@ class Config:
             else:
                 d[k] = v
         return d
-    
+
     def save_config(self):
         """保存配置到文件"""
         try:
@@ -104,7 +104,7 @@ class Config:
             print("配置保存成功")
         except Exception as e:
             print(f"保存配置文件失败: {e}")
-    
+
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置项"""
         keys = key.split(".")
@@ -115,7 +115,7 @@ class Config:
             return value
         except (KeyError, TypeError):
             return default
-    
+
     def set(self, key: str, value: Any):
         """设置配置项"""
         keys = key.split(".")
@@ -126,6 +126,7 @@ class Config:
             config = config[k]
         config[keys[-1]] = value
         self.save_config()
+
 
 # 全局配置实例
 config = Config()

@@ -8,9 +8,4 @@ from .typography import Typography
 from .spacing import Spacing
 from .styles import StyleSheet
 
-__all__ = [
-    'ColorPalette',
-    'Typography',
-    'Spacing',
-    'StyleSheet'
-] 
+__all__ = ["ColorPalette", "Typography", "Spacing", "StyleSheet"]

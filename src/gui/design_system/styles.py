@@ -7,17 +7,18 @@ from .colors import ColorPalette
 from .typography import Typography
 from .spacing import Spacing
 
+
 class StyleSheet:
     """样式表生成器"""
-    
+
     @staticmethod
     def create_button_style(variant: str = "primary", enabled: bool = True) -> str:
         """生成按钮样式
-        
+
         Args:
             variant: 按钮变体，可选值：primary, secondary, text
             enabled: 是否启用
-            
+
         Returns:
             str: 样式表字符串
         """
@@ -33,7 +34,7 @@ class StyleSheet:
                     font-size: {Typography.FONT_SIZE["base"]}px;
                 }}
             """
-            
+
         if variant == "primary":
             return f"""
                 QPushButton {{
@@ -91,15 +92,15 @@ class StyleSheet:
                     color: {ColorPalette.PRIMARY_DARK};
                 }}
             """
-    
+
     @staticmethod
     def create_input_style(variant: str = "default", enabled: bool = True) -> str:
         """生成输入框样式
-        
+
         Args:
             variant: 输入框变体，可选值：default, error
             enabled: 是否启用
-            
+
         Returns:
             str: 样式表字符串
         """
@@ -115,7 +116,7 @@ class StyleSheet:
                     font-size: {Typography.FONT_SIZE["base"]}px;
                 }}
             """
-            
+
         if variant == "error":
             return f"""
                 QLineEdit {{
@@ -145,4 +146,4 @@ class StyleSheet:
                 QLineEdit:focus {{
                     border: 2px solid {ColorPalette.PRIMARY};
                 }}
-            """ 
+            """
