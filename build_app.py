@@ -111,7 +111,7 @@ def build_app():
 
     # 使用spec文件构建
     build_cmd = ["pyinstaller", "DeepStressModel.spec", "--noconfirm"]
-    process = subprocess.run(build_cmd, shell=True, check=True)
+    process = subprocess.run(build_cmd, shell=False, check=True)
 
     if process.returncode == 0:
         print("应用程序构建成功!")
@@ -137,16 +137,16 @@ def create_standalone_exe():
         "--name=DeepStressModel-Standalone",
         "--onefile",
         "--windowed",
-        "--add-data=data;data",
-        "--add-data=resources;resources",
-        "--add-data=src/benchmark/crypto/key_module/prebuilt;src/benchmark/crypto/key_module/prebuilt",
+        "--add-data=data:data",
+        "--add-data=resources:resources",
+        "--add-data=src/benchmark/crypto/key_module/prebuilt:src/benchmark/crypto/key_module/prebuilt",
         "--noconfirm",
     ]
 
     if Path("resources/icon.ico").exists():
         standalone_cmd.append("--icon=resources/icon.ico")
 
-    process = subprocess.run(standalone_cmd, shell=True, check=True)
+    process = subprocess.run(standalone_cmd, shell=False, check=True)
 
     if process.returncode == 0:
         print("单文件可执行文件构建成功!")
@@ -169,16 +169,16 @@ def create_debug_exe():
         "--name=DeepStressModel-Debug",
         "--onefile",
         "--console",  # 启用控制台窗口
-        "--add-data=data;data",
-        "--add-data=resources;resources",
-        "--add-data=src/benchmark/crypto/key_module/prebuilt;src/benchmark/crypto/key_module/prebuilt",
+        "--add-data=data:data",
+        "--add-data=resources:resources",
+        "--add-data=src/benchmark/crypto/key_module/prebuilt:src/benchmark/crypto/key_module/prebuilt",
         "--noconfirm",
     ]
 
     if Path("resources/icon.ico").exists():
         debug_cmd.append("--icon=resources/icon.ico")
 
-    process = subprocess.run(debug_cmd, shell=True, check=True)
+    process = subprocess.run(debug_cmd, shell=False, check=True)
 
     if process.returncode == 0:
         print("调试版本构建成功!")
