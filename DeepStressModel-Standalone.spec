@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['src\\main.py'],
+    ['src/main.py'],
     pathex=[],
     binaries=[],
     datas=[('data', 'data'), ('resources', 'resources'), ('src/benchmark/crypto/key_module/prebuilt', 'src/benchmark/crypto/key_module/prebuilt')],

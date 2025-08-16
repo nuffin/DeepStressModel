@@ -37,7 +37,7 @@ added_files = [
 ]
 
 a = Analysis(
-    ['src/main.py'],
+    [str(Path("src") / "main.py")],
     pathex=[],
     binaries=[],
     datas=added_files,
@@ -116,10 +116,13 @@ def build_app():
     if process.returncode == 0:
         print("应用程序构建成功!")
         # 检查结果
-        dist_path = Path("dist/DeepStressModel")
+        exe_name = "DeepStressModel"
+        if sys.platform.startswith("win"):
+            exe_name += ".exe"
+        dist_path = Path("dist") / exe_name
         if dist_path.exists():
-            print(f"可执行文件已生成: {dist_path.absolute()}")
-            print(f"请运行 {dist_path/'DeepStressModel.exe'} 启动应用程序")
+            print(f"可执行文件已生成: {dist_path}")
+            print(f"请运行 {dist_path} 启动应用程序")
         else:
             print("警告: 未找到生成的可执行文件!")
     else:
@@ -150,7 +153,10 @@ def create_standalone_exe():
 
     if process.returncode == 0:
         print("单文件可执行文件构建成功!")
-        standalone_path = Path("dist/DeepStressModel-Standalone.exe")
+        exe_name = "DeepStressModel-Standalone"
+        if sys.platform.startswith("win"):
+            exe_name += ".exe"
+        standalone_path = Path("dist") / exe_name
         if standalone_path.exists():
             print(f"可执行文件已生成: {standalone_path.absolute()}")
         else:
@@ -182,7 +188,10 @@ def create_debug_exe():
 
     if process.returncode == 0:
         print("调试版本构建成功!")
-        debug_path = Path("dist/DeepStressModel-Debug.exe")
+        exe_name = "DeepStressModel-Debug"
+        if sys.platform.startswith("win"):
+            exe_name += ".exe"
+        debug_path = Path("dist") / exe_name
         if debug_path.exists():
             print(f"调试版本已生成: {debug_path.absolute()}")
             print("运行方式: DeepStressModel-Debug.exe --debug")
